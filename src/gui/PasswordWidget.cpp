@@ -178,12 +178,8 @@ void PasswordWidget::setShowPassword(bool show)
 
     if (m_repeatPasswordWidget) {
         m_repeatPasswordWidget->setEchoMode(show ? QLineEdit::Normal : QLineEdit::Password);
-        if (!config()->get(Config::Security_PasswordsRepeatVisible).toBool()) {
-            m_repeatPasswordWidget->setEnabled(!show);
-            m_repeatPasswordWidget->setText(text());
-        } else {
-            m_repeatPasswordWidget->setEnabled(true);
-        }
+        m_repeatPasswordWidget->setEnabled(!show);
+        m_repeatPasswordWidget->setText(text());
     }
 }
 
@@ -233,8 +229,8 @@ void PasswordWidget::updateRepeatStatus()
 
 void PasswordWidget::autocompletePassword(const QString& password)
 {
-    if (!config()->get(Config::Security_PasswordsRepeatVisible).toBool()
-        && m_ui->passwordEdit->echoMode() == QLineEdit::Normal) {
+    // If the password is visible, always copy it into the repeat field
+    if (m_ui->passwordEdit->echoMode() == QLineEdit::Normal) {
         setText(password);
     }
 }
