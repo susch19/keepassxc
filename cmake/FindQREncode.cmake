@@ -15,14 +15,7 @@
 
 find_path(QRENCODE_INCLUDE_DIR NAMES qrencode.h)
 
-if (VCPKG_INSTALLED_DIR)
-    find_library(QRENCODE_LIBRARY_RELEASE qrencode)
-    find_library(QRENCODE_LIBRARY_DEBUG qrencoded)
-    set(QRENCODE_LIBRARY optimized ${QRENCODE_LIBRARY_RELEASE} debug ${QRENCODE_LIBRARY_DEBUG})
-else()
-    find_library(QRENCODE_LIBRARY qrencode)
-endif()
-
+find_library(QRENCODE_LIBRARY qrencode)
 mark_as_advanced(QRENCODE_LIBRARY QRENCODE_INCLUDE_DIR)
 
 include(FindPackageHandleStandardArgs)
