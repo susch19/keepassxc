@@ -21,7 +21,6 @@
 #include "core/Tools.h"
 #include "crypto/Random.h"
 #include "thirdparty/ykcore/ykcore.h"
-#include "thirdparty/ykcore/ykdef.h"
 #include "thirdparty/ykcore/ykstatus.h"
 
 namespace

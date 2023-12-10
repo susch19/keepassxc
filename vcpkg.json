@@ -20,6 +20,11 @@
       "version>=": "4.1.1"
     },
     {
+      "name": "libusb",
+      "version>=": "1.0.26.11791",
+      "platform": "linux | freebsd"
+    },
+    {
       "name": "libxi",
       "version>=": "1.8",
       "platform": "linux | freebsd"

@@ -32,6 +32,7 @@ class YubiKeyInterfaceUSB : public YubiKeyInterface
 
 public:
     static YubiKeyInterfaceUSB* instance();
+    static constexpr int YUBICO_USB_VID = YUBICO_VID;
 
     bool findValidKeys() override;
 

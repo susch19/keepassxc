@@ -20,7 +20,6 @@
 #define KEEPASSX_YUBIKEY_INTERFACE_H
 
 #include "YubiKey.h"
-
 #include <QMultiMap>
 
 /**

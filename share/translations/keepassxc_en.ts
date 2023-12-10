@@ -1530,14 +1530,6 @@ Backup database located at %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Refresh hardware tokens</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Refresh</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Unlock Database</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1629,10 +1621,6 @@ If you do not have a key file, please leave the field empty.</source>
     </message>
     <message>
         <source>Detecting hardware keys…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>No hardware keys detected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9397,14 +9385,6 @@ Example: JBSWY3DPEHPK3PXP</source>
 </context>
 <context>
     <name>YubiKeyEditWidget</name>
-    <message>
-        <source>Refresh hardware tokens</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Refresh</source>
-        <translation type="unfinished"></translation>
-    </message>
     <message>
         <source>Hardware key slot selection</source>
         <translation type="unfinished"></translation>
