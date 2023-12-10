@@ -141,19 +141,19 @@ function Test-WorkingTreeClean {
 
 function Invoke-VSToolchain([String] $Toolchain, [String] $Path, [String] $Arch) {
     # Find Visual Studio installations
-    $vs = Get-CimInstance MSFT_VSInstance
+    $vs = Get-VSSetupInstance -All
     if ($vs.count -eq 0) {
         $err = "No Visual Studio installations found, download one from https://visualstudio.com/downloads."
         $err = "$err`nIf Visual Studio is installed, you may need to repair the install then restart."
         throw $err
     }
 
-    $VSBaseDir = $vs[0].InstallLocation
+    $VSBaseDir = $vs[0].InstallationPath
     if ($Toolchain) {
         # Try to find the specified toolchain by name
         foreach ($_ in $vs) {
-            if ($_.Name -eq $Toolchain) {
-                $VSBaseDir = $_.InstallLocation
+            if ($_.DisplayName -eq $Toolchain) {
+                $VSBaseDir = $_.InstallationPath
                 break
             }
         }
@@ -169,7 +169,7 @@ function Invoke-VSToolchain([String] $Toolchain, [String] $Path, [String] $Arch)
         if ($i -lt 0 -or $i -ge $vs.count) {
             throw "Invalid selection made"
         }
-        $VSBaseDir = $vs[$i].InstallLocation
+        $VSBaseDir = $vs[$i].InstallationPath
     }
     
     # Bootstrap the specified VS Toolchain
@@ -429,8 +429,8 @@ if ($Merge) {
 # SIG # Begin signature block
 # MIIfXAYJKoZIhvcNAQcCoIIfTTCCH0kCAQExDzANBglghkgBZQMEAgEFADB5Bgor
 # BgEEAYI3AgEEoGswaTA0BgorBgEEAYI3AgEeMCYCAwEAAAQQH8w7YFlLCE63JNLG
-# KX7zUQIBAAIBAAIBAAIBAAIBADAxMA0GCWCGSAFlAwQCAQUABCC3+AltPeIvGycP
-# LJr+5kqYiFnGPXyfdXgAkgrw+aI/AqCCGSAwggU6MIIEIqADAgECAhBYotctjMD9
+# KX7zUQIBAAIBAAIBAAIBAAIBADAxMA0GCWCGSAFlAwQCAQUABCD7j5268arm9YpH
+# b5x+z4Q5/vLe2CSKhk4mhx49qs59B6CCGSAwggU6MIIEIqADAgECAhBYotctjMD9
 # icz/IeDU7cdKMA0GCSqGSIb3DQEBCwUAMHwxCzAJBgNVBAYTAkdCMRswGQYDVQQI
 # ExJHcmVhdGVyIE1hbmNoZXN0ZXIxEDAOBgNVBAcTB1NhbGZvcmQxGDAWBgNVBAoT
 # D1NlY3RpZ28gTGltaXRlZDEkMCIGA1UEAxMbU2VjdGlnbyBSU0EgQ29kZSBTaWdu
@@ -570,29 +570,29 @@ if ($Merge) {
 # Z28gUlNBIENvZGUgU2lnbmluZyBDQQIQWKLXLYzA/YnM/yHg1O3HSjANBglghkgB
 # ZQMEAgEFAKCBhDAYBgorBgEEAYI3AgEMMQowCKACgAChAoAAMBkGCSqGSIb3DQEJ
 # AzEMBgorBgEEAYI3AgEEMBwGCisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMC8G
-# CSqGSIb3DQEJBDEiBCBp7GODztdZALJXKtlDO7iMqjlod5DXJQUaVMMwaRVDkzAN
-# BgkqhkiG9w0BAQEFAASCAQB8i7HZnhNcD6S7hrG+nk6bDcg8LyL+C3QOnmxIQKA3
-# +TQB02qB83WI+ErrH7GQHgi+7kB4K8NYs1dK/yYIp6pwgXUnYqQlsQCYzMRk9Shn
-# gvJWO04dV3V17NHfAXHT/+gHKTOOUJf58/Yabo87/vu4K5gE2g3TOrMHm0G9x1k8
-# PXgW6mzMD6xEz0tuvXdGZ8BSZ5VlDYV5ITchn8Eni29RTSIBIbZHbMWI5Gcsbzqd
-# ZLKHmVOoT2Las0VWNzq96+1X1HjFGhPqAIm19ByZyGI3OO9fgP6lfGuHyE2eyYUp
-# MKQ6qr8nfPzmp3bF0JLSGV3pEViDOqRgkkQmOXHfHlqsoYIDSzCCA0cGCSqGSIb3
+# CSqGSIb3DQEJBDEiBCD27VcXw5kLnblmCP0XImBp/TBfWe68snh7HM69vkfQvzAN
+# BgkqhkiG9w0BAQEFAASCAQAq6lmK6ndHEnP020FDJMeV4Fk7agECtqVR+GrzmFRM
+# uOos1NkjSPor+4/MUwhLbVhv0QS1zmPM4xdjO46XUGxuxU2cTP/1s6tL6dnQiOOq
+# Xkc0rn1v81fF4lHzuJcrMlfMe80/rT8LiZKMSMJe5P0MkR6K37fKUR8DlUi0onRP
+# Opv6aNorUm1fp0pVu9Y8U7dsCFO7oS0mGO8CyoR2h23qsYMcJKIQ807WdWwJOXJK
+# y8JCJIMSQuK+XL6eUv8Gu0/iFNRXLzCUik/wTr8sKebPja3I7vq5dcLLKQVznMPt
+# CM6lPHg+zjaAzs8FnQLZ5BNDiheWmFEafuxffFfH3SJRoYIDSzCCA0cGCSqGSIb3
 # DQEJBjGCAzgwggM0AgEBMIGRMH0xCzAJBgNVBAYTAkdCMRswGQYDVQQIExJHcmVh
 # dGVyIE1hbmNoZXN0ZXIxEDAOBgNVBAcTB1NhbGZvcmQxGDAWBgNVBAoTD1NlY3Rp
 # Z28gTGltaXRlZDElMCMGA1UEAxMcU2VjdGlnbyBSU0EgVGltZSBTdGFtcGluZyBD
 # QQIQOUwl4XygbSeoZeI72R0i1DANBglghkgBZQMEAgIFAKB5MBgGCSqGSIb3DQEJ
-# AzELBgkqhkiG9w0BBwEwHAYJKoZIhvcNAQkFMQ8XDTIzMDUxNDE1NDIxNVowPwYJ
-# KoZIhvcNAQkEMTIEMKBb5TFeMuv1qxZqrDJfQEEWakbNGIkGSDjYiTjHu6rQDjE+
-# wn2WhvQ9S7rrqkZ4TzANBgkqhkiG9w0BAQEFAASCAgB9rwCunYwZmKK2yrW21JSE
-# mdzXgL1Hs6niOJCuFJM1+t3q9KNvLXMgc6E/kiwyHrLVEBrCTGLOp3+AbElJJ/Vu
-# NimG9BgS5/62lJEt/kBQkaO/x+wKctlrPzrPNK1FZurro3zpA+xFsXV+SZPzj7jW
-# BHmtVDGJFg3BEMaliXB4afT57sBKnm29qZW7x6SiZ8v5IQfNTOygaPCyKKg6LxKi
-# Nyq5cze9rBbXsbnSGp15mClRRdhaONGMpHtoEHRQ62GuLYT/frg5h4vaGZaAmIL+
-# 9EZhHzImr10MpZNhNO+PMzvaisBUy9+Bx/vSSXu4DNoqgKq5Q/m+cJAwaZendA3W
-# vFg2tk/uhfbosURr8XehcG3HsAtgE81xa/lKCqKkDLKmr4LVFoSdaUoYnT1X+WER
-# beo/4BzLganKwBktK/hz4kR94aZDdCXnIdJCVSAcH9bpUPcgiv2UoWxStswpcQLy
-# R/uYROrQ/AhVXZK3uZ7vAjZFJ+fNn6gELTz/fznrvw5wdLFZGR26/B0d+N9iqYZF
-# 4V15aFcVy+2lxn/uoTtfaBWXBz1ogtw5hMpFFYD7Ud5ulTG3akNqoOXBXoZ0tsEP
-# nlyuwg8R2Vne0am6tqOkZJGKZU+0IEBYL8AMAU7fdC6m7NToYMeprplYiHvZMubm
-# oEg70cKHaUX3Ydxx0QGHDQ==
+# AzELBgkqhkiG9w0BBwEwHAYJKoZIhvcNAQkFMQ8XDTIzMTIxMDEzMjM0MVowPwYJ
+# KoZIhvcNAQkEMTIEMItWZ73liBN0vPXyvU+gbDSsMjJI4Fk3NkcqJO5kmjeNhCwy
+# LpzlkFXAQwfE2CGW3jANBgkqhkiG9w0BAQEFAASCAgCfyZO90s/o+ArjAdhPWs8P
+# Fk53uBvtikodGDYlra+joiOO4qM0kXEZfT+4emj7pw9FXmSVkHBXS1IoBFRcqxIL
+# lNYgsHbp0gpC41owR2t7rmqR9Yf4nXAJOV0JH83cu5u4yuRIPK4N+t+3hho22UPA
+# 2D/ugfo757quprMSfXKdv8s1WdO65REuzupuPDafbJTjZkTREGw6qzo6h7PCX+av
+# SmVmRhGXlO7u28a3639d3SWNNYETu4A2NaeGd8EyIBsdMt+p9GH3dfny84POJT3G
+# 9fDeAhOmaDGoK+tRJ6s0BwrNmX6PmLsF456wivH7KT2kFhcDesDiQtw5s//8HsY4
+# eY5DZgMPsCyy2zV6qrgiSYFcc/0uhAhPRm1nCuGjN1DwX2BrGt1UtlnmW01V3uqj
+# wEe1okSoojcJbIhUWsuhJURQHLT/A3mmSOS5zi83+Dw0Qge1JOH3m3276FdSkDmJ
+# ADI0usp59PPlbkQNcsM3cIfgr3e4rSn8tv4LOrbBUSM4MOPYfcHv/8qJPU0wgeA6
+# 6coFGlo2FLNxqPc41QajxV+5XgRbQC4blcC3h/tdghJYHmOp1AHRCNy+I/nV56uU
+# pDnfqfQ3FcxSthQU+d2GtmfDBs4MKVwc/DJmHTtTEsBF7T2m758QX/oap0P2Qbai
+# x6mDbeeNh9w8DOcFqLciDg==
 # SIG # End signature block
