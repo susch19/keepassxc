@@ -76,14 +76,13 @@ protected slots:
     void reject();
 
 private slots:
-    void browseKeyFile();
+    bool browseKeyFile();
+    void toggleKeyFileComponent(bool state);
+    void toggleHardwareKeyComponent(bool state);
     void pollHardwareKey();
     void hardwareKeyResponse(bool found);
-    void openHardwareKeyHelp();
-    void openKeyFileHelp();
 
 private:
-    void toggleHardwareKeyWidgets(bool state);
 #ifdef WITH_XC_YUBIKEY
     QPointer<DeviceListener> m_deviceListener;
 #endif

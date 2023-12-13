@@ -150,12 +150,12 @@ bool YubiKeyInterfaceUSB::findValidKeys()
                 // Don't actually challenge a YubiKey Neo or below, they always require button press
                 // if it is enabled for the slot resulting in failed detection
                 if (pid <= NEO_OTP_U2F_CCID_PID) {
-                    auto display = tr("(USB) %1 [%2] Configured Slot - %3")
+                    auto display = tr("%1 [%2] - Slot %3", "YubiKey NEO display fields")
                                        .arg(name, QString::number(serial), QString::number(slot));
                     m_foundKeys.insert(serial, {slot, display});
                 } else if (performTestChallenge(yk_key, slot, &wouldBlock)) {
                     auto display =
-                        tr("(USB) %1 [%2] Challenge-Response - Slot %3 - %4")
+                        tr("%1 [%2] - Slot %3, %4", "YubiKey display fields")
                             .arg(name,
                                  QString::number(serial),
                                  QString::number(slot),

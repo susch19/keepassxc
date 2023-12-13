@@ -95,22 +95,27 @@ DatabaseOpenWidget::DatabaseOpenWidget(QWidget* parent)
     connect(m_ui->buttonBox, SIGNAL(accepted()), SLOT(openDatabase()));
     connect(m_ui->buttonBox, SIGNAL(rejected()), SLOT(reject()));
 
-#ifdef WITH_XC_YUBIKEY
-    connect(m_deviceListener, SIGNAL(devicePlugged(bool, void*, void*)), this, SLOT(pollHardwareKey()));
-#endif
+    connect(m_ui->addKeyFileLinkLabel, &QLabel::linkActivated, this, [&](const QString&) {
+        if (browseKeyFile()) {
+            toggleKeyFileComponent(true);
+        }
+    });
+    connect(m_ui->keyFileLineEdit, &PasswordWidget::textChanged, this, [&](const QString& text) {
+        if (text.isEmpty() && m_ui->keyFileLineEdit->isVisible()) {
+            toggleKeyFileComponent(false);
+        }
+    });
+    connect(m_ui->useHardwareKeyCheckBox, &QCheckBox::toggled, m_ui->hardwareKeyCombo, &QComboBox::setEnabled);
 
-    m_ui->hardwareKeyLabelHelp->setIcon(icons()->icon("system-help").pixmap(QSize(12, 12)));
-    connect(m_ui->hardwareKeyLabelHelp, SIGNAL(clicked(bool)), SLOT(openHardwareKeyHelp()));
-    m_ui->keyFileLabelHelp->setIcon(icons()->icon("system-help").pixmap(QSize(12, 12)));
-    connect(m_ui->keyFileLabelHelp, SIGNAL(clicked(bool)), SLOT(openKeyFileHelp()));
+    toggleKeyFileComponent(false);
+    toggleHardwareKeyComponent(false);
 
-    toggleHardwareKeyWidgets(false);
-
-#ifdef WITH_XC_YUBIKEY
     QSizePolicy sp = m_ui->hardwareKeyProgress->sizePolicy();
     sp.setRetainSizeWhenHidden(true);
     m_ui->hardwareKeyProgress->setSizePolicy(sp);
 
+#ifdef WITH_XC_YUBIKEY
+    connect(m_deviceListener, SIGNAL(devicePlugged(bool, void*, void*)), this, SLOT(pollHardwareKey()));
     connect(YubiKey::instance(), SIGNAL(detectComplete(bool)), SLOT(hardwareKeyResponse(bool)), Qt::QueuedConnection);
 
     connect(YubiKey::instance(), &YubiKey::userInteractionRequest, this, [this] {
@@ -132,12 +137,26 @@ DatabaseOpenWidget::DatabaseOpenWidget(QWidget* parent)
 
 DatabaseOpenWidget::~DatabaseOpenWidget() = default;
 
-void DatabaseOpenWidget::toggleHardwareKeyWidgets(bool state)
+void DatabaseOpenWidget::toggleKeyFileComponent(bool state)
 {
-    m_ui->hardwareKeyCombo->setVisible(state);
+    m_ui->addKeyFileLinkLabel->setVisible(!state);
+    m_ui->selectKeyFileComponent->setVisible(state);
+}
+
+void DatabaseOpenWidget::toggleHardwareKeyComponent(bool state)
+{
     m_ui->hardwareKeyProgress->setVisible(false);
-    m_ui->hardwareKeyLabel->setVisible(state);
-    m_ui->hardwareKeyLabelHelp->setVisible(state);
+    m_ui->hardwareKeyComponent->setVisible(state);
+    m_ui->hardwareKeyCombo->setVisible(state && m_ui->hardwareKeyCombo->count() != 1);
+    if (m_ui->hardwareKeyCombo->count() == 1) {
+        m_ui->useHardwareKeyCheckBox->setText(
+            tr("Use hardware key [Serial: %1]")
+                .arg(m_ui->hardwareKeyCombo->itemData(m_ui->hardwareKeyCombo->currentIndex())
+                         .value<YubiKeySlot>()
+                         .first));
+    } else {
+        m_ui->useHardwareKeyCheckBox->setText(tr("Use hardware key"));
+    }
 }
 
 void DatabaseOpenWidget::showEvent(QShowEvent* event)
@@ -199,6 +218,7 @@ void DatabaseOpenWidget::load(const QString& filename)
         auto lastKeyFiles = config()->get(Config::LastKeyFiles).toHash();
         if (lastKeyFiles.contains(m_filename)) {
             m_ui->keyFileLineEdit->setText(lastKeyFiles[m_filename].toString());
+            toggleKeyFileComponent(true);
         }
     }
 
@@ -403,7 +423,7 @@ QSharedPointer<CompositeKey> DatabaseOpenWidget::buildDatabaseKey()
     lastChallengeResponse.remove(m_filename);
 
     int selectionIndex = m_ui->hardwareKeyCombo->currentIndex();
-    if (selectionIndex > 0) {
+    if (m_ui->useHardwareKeyCheckBox->isChecked()) {
         auto slot = m_ui->hardwareKeyCombo->itemData(selectionIndex).value<YubiKeySlot>();
         auto crKey = QSharedPointer<ChallengeResponseKey>(new ChallengeResponseKey(slot));
         databaseKey->addChallengeResponseKey(crKey);
@@ -425,23 +445,37 @@ void DatabaseOpenWidget::reject()
     emit dialogFinished(false);
 }
 
-void DatabaseOpenWidget::browseKeyFile()
+bool DatabaseOpenWidget::browseKeyFile()
 {
     QString filters = QString("%1 (*);;%2 (*.keyx; *.key)").arg(tr("All files"), tr("Key files"));
-    QString filename = fileDialog()->getOpenFileName(this, tr("Select key file"), QString(), filters);
+    QString filename =
+        fileDialog()->getOpenFileName(this, tr("Select key file"), FileDialog::getLastDir("keyfile"), filters);
+    if (filename.isEmpty()) {
+        return false;
+    }
+    FileDialog::saveLastDir("keyfile", filename, true);
 
     if (QFileInfo(filename).canonicalFilePath() == QFileInfo(m_filename).canonicalFilePath()) {
         MessageBox::warning(this,
                             tr("Cannot use database file as key file"),
-                            tr("You cannot use your database file as a key file.\nIf you do not have a key file, "
-                               "please leave the field empty."),
+                            tr("Your database file is NOT a key file!\nIf you don't have a key file or don't know what "
+                               "that is, you don't have to select one."),
                             MessageBox::Button::Ok);
-        filename = "";
+        return false;
+    }
+    if (filename.endsWith(".kdbx")
+        && MessageBox::warning(this,
+                               tr("KeePassXC database file selected"),
+                               tr("The file you selected looks like a database file.\nA database file is NOT a key "
+                                  "file!\n\nAre you sure you want to continue with this file?."),
+                               MessageBox::Button::Yes | MessageBox::Button::Cancel,
+                               MessageBox::Button::Cancel)
+               != MessageBox::Yes) {
+        return false;
     }
 
-    if (!filename.isEmpty()) {
-        m_ui->keyFileLineEdit->setText(filename);
-    }
+    m_ui->keyFileLineEdit->setText(filename);
+    return true;
 }
 
 void DatabaseOpenWidget::pollHardwareKey()
@@ -450,10 +484,7 @@ void DatabaseOpenWidget::pollHardwareKey()
         return;
     }
 
-    m_ui->hardwareKeyCombo->clear();
-    m_ui->hardwareKeyCombo->addItem(tr("Detecting hardware keys…"));
     m_ui->hardwareKeyCombo->setEnabled(false);
-
     m_ui->hardwareKeyProgress->setVisible(true);
     m_pollingHardwareKey = true;
 
@@ -464,13 +495,13 @@ void DatabaseOpenWidget::hardwareKeyResponse(bool found)
 {
     m_ui->hardwareKeyProgress->setVisible(false);
     m_ui->hardwareKeyCombo->clear();
+    m_ui->useHardwareKeyCheckBox->setChecked(false);
     m_pollingHardwareKey = false;
 
     if (!found) {
-        toggleHardwareKeyWidgets(false);
+        toggleHardwareKeyComponent(false);
         return;
     }
-    m_ui->hardwareKeyCombo->addItem(tr("Select hardware key…"));
     YubiKeySlot lastUsedSlot;
     if (config()->get(Config::RememberLastKeyFiles).toBool()) {
         auto lastChallengeResponse = config()->get(Config::LastChallengeResponse).toHash();
@@ -480,6 +511,7 @@ void DatabaseOpenWidget::hardwareKeyResponse(bool found)
             if (split.size() > 1) {
                 lastUsedSlot = YubiKeySlot(split[0].toUInt(), split[1].toInt());
             }
+            m_ui->useHardwareKeyCheckBox->setChecked(true);
         }
     }
 
@@ -493,19 +525,9 @@ void DatabaseOpenWidget::hardwareKeyResponse(bool found)
         }
     }
 
-    toggleHardwareKeyWidgets(true);
-    m_ui->hardwareKeyCombo->setEnabled(true);
+    toggleHardwareKeyComponent(true);
+    m_ui->hardwareKeyCombo->setEnabled(m_ui->useHardwareKeyCheckBox->isChecked());
     m_ui->hardwareKeyCombo->setCurrentIndex(selectedIndex);
-}
-
-void DatabaseOpenWidget::openHardwareKeyHelp()
-{
-    QDesktopServices::openUrl(QUrl("https://keepassxc.org/docs/#faq-yubikey-2fa"));
-}
-
-void DatabaseOpenWidget::openKeyFileHelp()
-{
-    QDesktopServices::openUrl(QUrl("https://keepassxc.org/docs/#faq-keyfile-howto"));
 }
 
 void DatabaseOpenWidget::setUserInteractionLock(bool state)
