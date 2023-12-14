@@ -133,12 +133,11 @@ bool YubiKeyInterfaceUSB::findValidKeys()
 
             QString name = m_pid_names.value(pid, tr("Unknown"));
             if (vid == 0x1d50) {
-                name = QStringLiteral("OnlyKey");
+                name = QStringLiteral("OnlyKey %ver");
             }
-            name += QString(" v%1.%2.%3")
-                        .arg(QString::number(ykds_version_major(st)),
-                             QString::number(ykds_version_minor(st)),
-                             QString::number(ykds_version_build(st)));
+            if (name.contains("%ver")) {
+                name = name.replace("%ver", QString::number(ykds_version_major(st)));
+            }
 
             bool wouldBlock;
             for (int slot = 1; slot <= 2; ++slot) {
