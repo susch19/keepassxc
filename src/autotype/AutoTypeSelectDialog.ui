@@ -135,13 +135,24 @@ Ctrl+4 - Use Virtual Keyboard (Windows Only)&lt;/p&gt;</string>
       <property name="bottomMargin">
        <number>0</number>
       </property>
-      <item>
-       <widget class="QCheckBox" name="searchCheckBox">
-        <property name="text">
-         <string>Search all open databases</string>
-        </property>
-       </widget>
-      </item>
+		 <item>
+			 <layout class="QHBoxLayout" name="horizontalLayout3">
+				 <item>
+					 <widget class="QCheckBox" name="searchCheckBox">
+						 <property name="text">
+							 <string>Search all open databases</string>
+						 </property>
+					 </widget>
+				 </item>
+				 <item>
+					 <widget class="QCheckBox" name="qmkCheckBox">
+						 <property name="text">
+							 <string>Type with QMK</string>
+						 </property>
+					 </widget>
+				 </item>
+			 </layout>
+		</item>
       <item>
        <spacer name="horizontalSpacer">
         <property name="orientation">

@@ -481,14 +481,13 @@ void AutoType::performGlobalAutoType(const QList<QSharedPointer<Database>>& dbLi
         connect(selectDialog,
                 &AutoTypeSelectDialog::matchActivated,
                 this,
-                [this](const AutoTypeMatch& match, bool virtualMode) {
+                [this](const AutoTypeMatch& match, AutoTypeExecutor::Mode virtualMode) {
                     m_lastMatch = match;
                     m_lastMatchRetypeTimer.start(config()->get(Config::GlobalAutoTypeRetypeTime).toInt() * 1000);
                     executeAutoTypeActions(match.first,
                                            match.second,
                                            m_windowForGlobal,
-                                           virtualMode ? AutoTypeExecutor::Mode::VIRTUAL
-                                                       : AutoTypeExecutor::Mode::NORMAL);
+                                           virtualMode);
                     resetAutoTypeState();
                 });
         connect(selectDialog, &QDialog::rejected, this, [this] {

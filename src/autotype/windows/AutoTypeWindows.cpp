@@ -280,6 +280,32 @@ AutoTypeAction::Result AutoTypeExecutorWin::execBegin(const AutoTypeBegin* actio
 
 AutoTypeAction::Result AutoTypeExecutorWin::execType(const AutoTypeKey* action)
 {
+    if (mode == Mode::QMK) {
+
+        HWND window = FindWindow(0, "Alex Shestakov's Keyboard Layout Monitor");
+        WPARAM wparam = action->key == Qt::Key_unknown ? action->character.unicode() : winUtils()->qtToNativeKeyCode(action->key);
+        LPARAM lparam = action->modifiers;
+
+        if (action->key != Qt::Key_unknown) {
+            switch (action->key) {
+            case Qt::Key_Return:
+                wparam = '\r';
+                break;
+            case Qt::Key_Enter:
+                wparam = '\n';
+                break;
+            default:
+                break;
+            }
+
+            wparam = wparam;
+        }
+
+        PostMessage(window, WM_USER + 8, wparam, lparam);
+
+        return AutoTypeAction::Result::Ok();
+    }
+
     if (action->modifiers & Qt::ShiftModifier) {
         m_platform->setKeyState(Qt::Key_Shift, true);
     }

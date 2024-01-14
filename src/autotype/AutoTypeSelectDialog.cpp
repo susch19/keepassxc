@@ -82,6 +82,13 @@ AutoTypeSelectDialog::AutoTypeSelectDialog(QWidget* parent)
         setDelayedSearch(checked);
         performSearch();
     });
+    connect(m_ui->qmkCheckBox, &QCheckBox::toggled, this, [this](bool checked) {
+        if (checked)
+            m_virtualMode = AutoTypeExecutor::Mode::QMK;
+        else
+            m_virtualMode = AutoTypeExecutor::Mode::NORMAL;
+    });
+    m_ui->qmkCheckBox->setChecked(true);
 
     m_actionMenu->installEventFilter(this);
     m_ui->action->setMenu(m_actionMenu);
@@ -323,16 +330,24 @@ void AutoTypeSelectDialog::buildActionMenu()
         match.second = "{TOTP}";
         submitAutoTypeMatch(match);
     });
-
+    
 #if defined(Q_OS_WIN) || defined(Q_OS_MAC)
     auto typeVirtualAction = new QAction(icons()->icon("auto-type"), tr("Use Virtual Keyboard"), nullptr);
     m_actionMenu->insertAction(copyUsernameAction, typeVirtualAction);
     typeVirtualAction->setShortcut(Qt::CTRL + Qt::Key_4);
     connect(typeVirtualAction, &QAction::triggered, this, [&] {
-        m_virtualMode = true;
+        m_virtualMode = AutoTypeExecutor::Mode::VIRTUAL;
         activateCurrentMatch();
     });
 #endif
+
+    auto typeQMKAction = new QAction(icons()->icon("auto-type"), tr("Use QMK"), nullptr);
+    m_actionMenu->insertAction(copyUsernameAction, typeQMKAction);
+    typeQMKAction->setShortcut(Qt::CTRL + Qt::Key_5);
+    connect(typeQMKAction, &QAction::triggered, this, [&] {
+        m_virtualMode = AutoTypeExecutor::Mode::QMK;
+        activateCurrentMatch();
+    });
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
     // Qt 5.10 introduced a new "feature" to hide shortcuts in context menus

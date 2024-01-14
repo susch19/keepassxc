@@ -22,6 +22,7 @@
 #include "autotype/AutoTypeMatch.h"
 #include <QDialog>
 #include <QTimer>
+#include "AutoTypeAction.h"
 
 class Database;
 class QMenu;
@@ -45,7 +46,7 @@ public:
     void setSearchString(const QString& search);
 
 signals:
-    void matchActivated(AutoTypeMatch match, bool virtualMode = false);
+    void matchActivated(AutoTypeMatch match, AutoTypeExecutor::Mode virtualMode = AutoTypeExecutor::Mode::NORMAL);
 
 protected:
     bool eventFilter(QObject* obj, QEvent* event) override;
@@ -70,7 +71,7 @@ private:
     QTimer m_searchTimer;
     QPointer<QMenu> m_actionMenu;
 
-    bool m_virtualMode = false;
+    AutoTypeExecutor::Mode m_virtualMode = AutoTypeExecutor::Mode::NORMAL;
     bool m_accepted = false;
 };
 

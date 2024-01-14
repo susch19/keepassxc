@@ -124,7 +124,8 @@ public:
     enum class Mode
     {
         NORMAL,
-        VIRTUAL
+        VIRTUAL,
+        QMK
     };
 
     virtual ~AutoTypeExecutor() = default;
